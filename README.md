@@ -2,50 +2,82 @@
 
 ## 📋 01 CORE
 
-### 1.1	Basis-Setup & Zugriff
-- [ ] **Minimal Debian Net Install**
-- [ ] **SSH** (Konfiguration sichern, Port, Fail2Ban vorbereiten)
-- [ ] **Admin-User erstellen** mit Sudo-Rechten, alte User löschen
-- [ ] **Zeitsynchronisation (NTP/Chrony)** (KRITISCH für Logs, Datenstempel, Netzwerk)
-- [ ] **Hostname-Verwaltung**
-- [ ] **ttyd**
-- [ ] **Framework & Erweiterbarkeit**
-- [ ] **TUI - Admin Tool**
-- [ ] **Autostart & Cron**
-- [ ] **Logs**
-
-### 1.1 Basis-Setup & Zugriff
-- [ ] **Minimal Debian Net Install** vorbereiten (automatisiert via Preseed/Cloud-init?)
+### 1.1 Basic Setup
+- [ ] **Minimal Debian Net Install** vorbereiten (Hostname!)
 - [ ] **SSH-Konfiguration sichern** (Port, Key-Auth, Fail2Ban vorbereiten)
+- [ ] **Alte User löschen** (UID >= 1000)
 - [ ] **Admin-User erstellen** mit Sudo-Rechten
-- [ ] **Zeitsynchronisation (NTP/Chrony)** - **KRITISCH für Logs, Datenstempel, Netzwerk**
-- [ ] **Hostname-Verwaltung** Script
-- [ ] **Basis-Paketmanagement** Script (apt-Updates, Repository-Management)
+- [ ] **Zeitsynchronisation (Chrony)** - **KRITISCH für Logs, Datenstempel, Netzwerk**
+- [ ] **Verzeichnisstruktur planen** (/mnt/disk1, /mnt/disk2, /mnt/pool, /mnt/usb...)
       
-### 1.2 Remote-Administration & Monitoring
+### 1.2 Remote-Administration
 - [ ] **ttyd installieren** (Web-Terminal für Admin)
-- [ ] **Firewall (UFW/iptables)** mit Basis-Regeln (SSH, SMB, ttyd nur lokal)
-- [ ] **Systemstatus-Script** (CPU, RAM, Speicher, Mountpoints, Services)
-- [ ] **Fail2Ban einrichten** (SSH-Schutz)
-- [ ] **Logging & Systemd-Journal** konfigurieren
 
-### 1.3 Erste Admin-Tools
+### 1.3 Framework
 - [ ] **Skript-Framework** erstellen (Verzeichnisstruktur, Logging, Error-Handling)
-- [ ] **Konfigurationsdatei-System** (zentrale /etc/nas/ oder ähnlich)
-- [ ] **Service-Health-Check Script**
+- [ ] **Datei-System** (zentrale /etc/nas/ oder ähnlich)
 
-## 2.	STORAGE
+### 1.4 Security
+- [ ] **Fail2Ban einrichten** (SSH-Schutz)
+- [ ] **Firewall (UFW/iptables)** mit Basis-Regeln (SSH, SMB, ttyd nur lokal)
+- [ ] **Firewall-Regeln für SMB** (445, 139)
+
+
+## 📋 02 STORAGE
 DryRun, BTRFS, ZFS, EXT4
-### 2.1	Datenträgerverwaltung
 Veränderungen, Automount, Benennung 
-### 2.2	MergeFS
-### 2.3	Parität
 
-## 3.	SHARES
-### 3.1	Benutzerverwaltung
-### 3.2	Samba-Installation & Freigaben
+### 2.1 Storage Administration
+- [ ] **Automount-Daemon** (ohne fstab, dynamisch)
+- [ ] **Partitionierungs-Script** (für neue HDDs)
+- [ ] **HDD-Detektor** (neue Laufwerke finden & benennen)
 
-### 3.3	Firewall & Sicherheit (SMB)
+### 2.2 MergeFS
+- [ ] **MergeFS installieren & konfigurieren**
+- [ ] **MergeFS-Pool-Creation Script**
+- [ ] **MergeFS-Health-Check** (fehlende Laufwerke, Fehler)
+
+### 2.3 Parity
+- [ ] **SnapRAID vorbereiten** (für Paritätsschutz)
+- [ ] **SnapRAID-Assistent** (erste Einrichtung mit Größen-Validierung)
+- [ ] **Automatische SnapRAID-Syncs** (Cron-Jobs)
+- [ ] **SnapRAID-Recovery-Script** (bei Ausfällen)
+
+
+## 📋 03: SHARES
+
+### 3.1 Samba-Installation
+- [ ] **Samba installieren & sichern**
+- [ ] **Samba-Share-Creation Script** (automatisierte Freigabe-Verwaltung)
+- [ ] **ACL/Permissions-Script** (Zugriffsrechte verwalten)
+- [ ] **Samba-Health-Check** (Service-Status, Shares verfügbar?)
+- [ ] **Backup der Samba-Konfiguration**
+
+### 3.2 Usermanagement
+- [ ] **Samba-User-Management Script** (Add/Remove/Edit ohne Systemuser)
+- [ ] **User-Gruppen** für Share-Zugriffsrechte
+- [ ] **Passwort-Management** (sicheres Speichern)
+
+
+
+
+
+
+
+Reste:
+1 - Core
+2 - Storage
+3 - Shares
+4 - Container
+5 - Virtualisation
+6 - Updates
+7 - Monitoring
+- [ ] **Service-Health-Check Script**
+- [ ] **Systemstatus-Script** (CPU, RAM, Speicher, Mountpoints, Services)
+- [ ] **Logging & Systemd-Journal** konfigurieren
+- [ ] **Speicher-Monitoring** (Auslastung, SMART-Daten)
+
+
 
 ## 4.	CONTAINER
 ### 4.1	Podman Basis
@@ -66,55 +98,8 @@ Veränderungen, Automount, Benennung
 
 
 
-### 1.2 Remote-Administration & Monitoring
-- [ ] **ttyd installieren** (Web-Terminal für Admin)
-- [ ] **Firewall (UFW/iptables)** mit Basis-Regeln (SSH, SMB, ttyd nur lokal)
-- [ ] **Systemstatus-Script** (CPU, RAM, Speicher, Mountpoints, Services)
-- [ ] **Fail2Ban einrichten** (SSH-Schutz)
-- [ ] **Logging & Systemd-Journal** konfigurieren
 
-### 1.3 Erste Admin-Tools
-- [ ] **Skript-Framework** erstellen (Verzeichnisstruktur, Logging, Error-Handling)
-- [ ] **Konfigurationsdatei-System** (zentrale /etc/nas/ oder ähnlich)
-- [ ] **Service-Health-Check Script**
 
-## 📋 PHASE 2: STORAGE & DATEN (Woche 3-4)
-
-### 2.1 Datenträgerverwaltung
-- [ ] **Automount-Daemon** (ohne fstab, dynamisch)
-- [ ] **Partitionierungs-Script** (für neue HDDs)
-- [ ] **HDD-Detektor** (neue Laufwerke finden & benennen)
-- [ ] **Speicher-Monitoring** (Auslastung, SMART-Daten)
-
-### 2.2 MergeFS & Shares
-- [ ] **MergeFS installieren & konfigurieren**
-- [ ] **Verzeichnisstruktur planen** (/mnt/disk1, /mnt/disk2, /mnt/pool, /mnt/usb...)
-- [ ] **MergeFS-Pool-Creation Script**
-- [ ] **MergeFS-Health-Check** (fehlende Laufwerke, Fehler)
-
-### 2.3 Parität (Optional aber wichtig)
-- [ ] **SnapRAID vorbereiten** (für Paritätsschutz)
-- [ ] **SnapRAID-Assistent** (erste Einrichtung mit Größen-Validierung)
-- [ ] **Automatische SnapRAID-Syncs** (Cron-Jobs)
-- [ ] **SnapRAID-Recovery-Script** (bei Ausfällen)
-
-## 📋 PHASE 3: SAMBA & BENUTZER (Woche 5)
-
-### 3.1 Benutzerverwaltung
-- [ ] **Samba-User-Management Script** (Add/Remove/Edit ohne Systemuser)
-- [ ] **User-Gruppen** für Share-Zugriffsrechte
-- [ ] **Passwort-Management** (sicheres Speichern)
-
-### 3.2 Samba-Installation & Freigaben
-- [ ] **Samba installieren & sichern**
-- [ ] **Samba-Share-Creation Script** (automatisierte Freigabe-Verwaltung)
-- [ ] **ACL/Permissions-Script** (Zugriffsrechte verwalten)
-- [ ] **Samba-Health-Check** (Service-Status, Shares verfügbar?)
-- [ ] **Backup der Samba-Konfiguration**
-
-### 3.3 Firewall & Sicherheit (SMB)
-- [ ] **Firewall-Regeln für SMB** (445, 139)
-- [ ] **SMB-Signing & Verschlüsselung** erzwingen
 
 ## 📋 PHASE 4: VIRTUALISIERUNG (Woche 6-7)
 
