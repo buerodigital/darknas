@@ -2,8 +2,6 @@
 Data belongs in the dark. Simple. Silent. Reliable.
 
 
-Abhänigkeiten abbilden!!!
-
 ## 📋 01 CORE
 
 ### 1.1 Basic Setup
