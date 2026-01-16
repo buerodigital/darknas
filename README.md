@@ -1,6 +1,8 @@
 # darknas
 
 ## 📋 01 CORE
+
+### 1.1	Basis-Setup & Zugriff
 - [ ] **Minimal Debian Net Install**
 - [ ] **SSH** (Konfiguration sichern, Port, Fail2Ban vorbereiten)
 - [ ] **Admin-User erstellen** mit Sudo-Rechten, alte User löschen
@@ -12,6 +14,25 @@
 - [ ] **Autostart & Cron**
 - [ ] **Logs**
 
+### 1.1 Basis-Setup & Zugriff
+- [ ] **Minimal Debian Net Install** vorbereiten (automatisiert via Preseed/Cloud-init?)
+- [ ] **SSH-Konfiguration sichern** (Port, Key-Auth, Fail2Ban vorbereiten)
+- [ ] **Admin-User erstellen** mit Sudo-Rechten
+- [ ] **Zeitsynchronisation (NTP/Chrony)** - **KRITISCH für Logs, Datenstempel, Netzwerk**
+- [ ] **Hostname-Verwaltung** Script
+- [ ] **Basis-Paketmanagement** Script (apt-Updates, Repository-Management)
+      
+### 1.2 Remote-Administration & Monitoring
+- [ ] **ttyd installieren** (Web-Terminal für Admin)
+- [ ] **Firewall (UFW/iptables)** mit Basis-Regeln (SSH, SMB, ttyd nur lokal)
+- [ ] **Systemstatus-Script** (CPU, RAM, Speicher, Mountpoints, Services)
+- [ ] **Fail2Ban einrichten** (SSH-Schutz)
+- [ ] **Logging & Systemd-Journal** konfigurieren
+
+### 1.3 Erste Admin-Tools
+- [ ] **Skript-Framework** erstellen (Verzeichnisstruktur, Logging, Error-Handling)
+- [ ] **Konfigurationsdatei-System** (zentrale /etc/nas/ oder ähnlich)
+- [ ] **Service-Health-Check Script**
 
 ## 2.	STORAGE
 DryRun, BTRFS, ZFS, EXT4
