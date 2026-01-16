@@ -1,5 +1,15 @@
 # darknas
 
+## 📋 CORE
+
+### 1.1 Basis-Setup & Zugriff
+- [ ] **Minimal Debian Net Install**
+blah blah
+- [ ] **SSH-Konfiguration sichern** (Port, Key-Auth, Fail2Ban vorbereiten)
+- [ ] **Admin-User erstellen** mit Sudo-Rechten
+- [ ] **Zeitsynchronisation (NTP/Chrony)** - **KRITISCH für Logs, Datenstempel, Netzwerk**
+- [ ] **Hostname-Verwaltung** Script
+- [ ] **Basis-Paketmanagement** Script (apt-Updates, Repository-Management)
 
 ## 1.	CORE
 ### 1.1	Basis-Setup & Zugriff
@@ -39,15 +49,7 @@ Veränderungen, Automount, Benennung
 ## 7.	REPORTING
 ### 7.1	Monitoring & Alerting
 
-## 📋 PHASE 1: KERN-INFRASTRUKTUR (Woche 1-2)
 
-### 1.1 Basis-Setup & Zugriff
-- [ ] **Minimal Debian Net Install** vorbereiten (automatisiert via Preseed/Cloud-init?)
-- [ ] **SSH-Konfiguration sichern** (Port, Key-Auth, Fail2Ban vorbereiten)
-- [ ] **Admin-User erstellen** mit Sudo-Rechten
-- [ ] **Zeitsynchronisation (NTP/Chrony)** - **KRITISCH für Logs, Datenstempel, Netzwerk**
-- [ ] **Hostname-Verwaltung** Script
-- [ ] **Basis-Paketmanagement** Script (apt-Updates, Repository-Management)
 
 ### 1.2 Remote-Administration & Monitoring
 - [ ] **ttyd installieren** (Web-Terminal für Admin)
