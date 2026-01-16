@@ -1,2 +1,0 @@
-# darknas
-NAS System
