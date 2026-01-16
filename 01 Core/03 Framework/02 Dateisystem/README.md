@@ -5,3 +5,8 @@ Module	/opt/darknas/modules	große modulare Komponenten	root:root 755	Sauber, is
 Logs	/var/log/darknas	rotierbare Logs	root:adm 640	kompatibel mit logrotate
 Daten Mounts	/mnt/pool	MergerFS/SnapRAID Mountpoints	root:root 755	klar trennbar
 
+|Zweck|   |   |   |   |
+|-----|-----|-----|-----|-----|
+|   |   |   |   |   |
+|   |   |   |   |   |
+|   |   |   |   |   |
