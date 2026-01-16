@@ -1,15 +1,15 @@
 # darknas
 
 
-##1.	KERN-INFRASTRUKTUR	3
-###1.1	Basis-Setup & Zugriff	3
-###1.2	Remote-Administration & Monitoring	3
-###1.3	Erste Admin-Tools	3
-2.	STORAGE & DATEN	4
-2.1	Datenträgerverwaltung	4
-2.2	MergeFS & Shares	4
-2.3	Parität	4
-3.	SAMBA & BENUTZER	5
+## 1.	KERN-INFRASTRUKTUR	3
+### 1.1	Basis-Setup & Zugriff	3
+### 1.2	Remote-Administration & Monitoring	3
+### 1.3	Erste Admin-Tools	3
+## 2.	STORAGE & DATEN	4
+### 2.1	Datenträgerverwaltung	4
+### 2.2	MergeFS & Shares	4
+### 2.3	Parität	4
+## 3.	SAMBA & BENUTZER	5
 3.1	Benutzerverwaltung	5
 3.2	Samba-Installation & Freigaben	5
 3.3	Firewall & Sicherheit (SMB)	5
