@@ -33,8 +33,8 @@ Data belongs in the dark. Simple. Silent. Reliable.
 
 
 ## 📋 02 STORAGE
-DryRun, BTRFS, ZFS, EXT4
-Veränderungen, Automount, Benennung 
+> DryRun, BTRFS, ZFS, EXT4
+> Veränderungen, Automount, Benennung 
 
 ### 2.1 Storage Administration
 - [ ] **Automount-Daemon** (ohne fstab, dynamisch)
