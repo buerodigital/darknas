@@ -1,21 +1,28 @@
 #!/bin/bash
 #
 # 00_postinstall.sh
-# DarkNAS Grundsystem:
-# - Systemupdate
-# - Ermitteln des Admin-Users (UID 1000)
-# - Admin-User in sudo-Gruppe aufnehmen
-# - Marker-Datei /etc/darknas/00_postinstall.conf erzeugen
-# - Logging nach /var/log/darknas/YYYY-MM-DD_00_postinstall.log
 #
+# DarkNAS Grundsystem:
+# 01) PATH sicherstellen
+# 02) Root-Prüfung
+# 03) Logdatei vorbereiten - Logging nach /var/log/darknas/YYYY-MM-DD_00_postinstall.log
+# 04) Marker-Verzeichnis vorbereiten - /etc/darknas/00_postinstall.conf erzeugen
+# 05) Systemupdate
+# 06) Zeitsynchronisation sicherstellen
+# 07) sudo installieren
+# 08) Admin-User "admin" anlegen oder aktualisieren
+# 09) Admin-User in sudo-Gruppe aufnehmen
+# 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
+# 11) Marker-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
+# 12) Abschluss
 
 #############################################
-# 1) PATH sicherstellen
+# 01) PATH sicherstellen
 #############################################
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 #############################################
-# 2) Root-Prüfung
+# 02) Root-Prüfung
 #############################################
 if [[ $EUID -ne 0 ]]; then
     echo "Dieses Skript muss als root ausgeführt werden."
@@ -23,7 +30,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 #############################################
-# 3) Logdatei vorbereiten
+# 03) Logdatei vorbereiten
 #############################################
 LOGDIR="/var/log/darknas"
 mkdir -p "$LOGDIR"
@@ -38,7 +45,7 @@ echo "Logdatei: $LOGFILE"
 echo
 
 #############################################
-# 4) Marker-Verzeichnis vorbereiten
+# 04) Marker-Verzeichnis vorbereiten
 #############################################
 MARKERDIR="/etc/darknas"
 MARKERFILE="$MARKERDIR/00_postinstall.conf"
@@ -51,7 +58,7 @@ if [[ -f "$MARKERFILE" ]]; then
 fi
 
 #############################################
-# 5) Systemupdate
+# 05) Systemupdate
 #############################################
 echo "--- Systemupdate wird durchgeführt ---"
 apt-get update -y
@@ -59,8 +66,29 @@ apt-get upgrade -y
 echo "--- Systemupdate abgeschlossen ---"
 echo
 
+
 #############################################
-# 6) sudo installieren
+# 06) Zeitsynchronisation sicherstellen
+#############################################
+echo "Synchronisiere Systemzeit..."
+
+# systemd-timesyncd installieren
+apt-get install -y systemd-timesyncd
+
+# Dienst aktivieren und starten
+systemctl enable systemd-timesyncd --now
+
+# NTP aktivieren
+timedatectl set-ntp true
+
+# Dienst neu starten, um sofort zu synchronisieren
+systemctl restart systemd-timesyncd
+
+echo "Zeitsynchronisation abgeschlossen."
+echo
+
+#############################################
+# 07) sudo installieren
 #############################################
 if ! command -v sudo >/dev/null 2>&1; then
     echo "sudo wird installiert..."
@@ -71,27 +99,51 @@ fi
 echo
 
 #############################################
-# 7) Admin-User mit UID 1000 ermitteln
+# 08) Admin-User "admin" anlegen oder aktualisieren
 #############################################
-ADMINUSER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+ADMINUSER="admin"
 
-if [[ -z "$ADMINUSER" ]]; then
-    echo "FEHLER: Kein Benutzer mit UID 1000 gefunden!"
-    exit 1
+# Prüfen, ob der Benutzer existiert
+if id "$ADMINUSER" >/dev/null 2>&1; then
+    echo "Benutzer '$ADMINUSER' existiert bereits."
+else
+    echo "Benutzer '$ADMINUSER' wird angelegt..."
+    useradd -m -s /bin/bash "$ADMINUSER"
 fi
 
-echo "Gefundener Admin-User (UID 1000): $ADMINUSER"
+# Passwort setzen (immer)
+echo "Setze Passwort für Benutzer '$ADMINUSER'..."
+echo "${ADMINUSER}:pass" | chpasswd
+
+echo "Admin-User ist: $ADMINUSER"
 echo
 
 #############################################
-# 8) Admin-User in sudo-Gruppe aufnehmen
+# 09) Admin-User in sudo-Gruppe aufnehmen
 #############################################
 echo "Füge Benutzer '$ADMINUSER' zur sudo-Gruppe hinzu..."
 usermod -aG sudo "$ADMINUSER"
 echo
 
 #############################################
-# 9) Marker-Datei erstellen
+# 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
+#############################################
+SUDOERS_FILE="/etc/sudoers.d/darknas"
+
+echo "Erstelle sudoers-Datei für Admin-User..."
+
+{
+    echo "# DarkNAS Admin-Rechte"
+    echo "admin ALL=(ALL) NOPASSWD: ALL"
+} > "$SUDOERS_FILE"
+
+chmod 440 "$SUDOERS_FILE"
+
+echo "sudoers-Datei erstellt: $SUDOERS_FILE"
+echo
+
+#############################################
+# 11) Marker-Datei erstellen
 #############################################
 echo "Erstelle Marker-Datei: $MARKERFILE"
 {
@@ -102,9 +154,10 @@ echo "Erstelle Marker-Datei: $MARKERFILE"
 chmod 600 "$MARKERFILE"
 
 #############################################
-# 10) Abschluss
+# 12) Abschluss
 #############################################
 echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
 echo "Der Admin-User dieses Systems lautet: $ADMINUSER"
 echo "Information gespeichert in: $MARKERFILE"
+
