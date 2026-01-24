@@ -6,14 +6,14 @@
 # 01) PATH sicherstellen
 # 02) Root-Prüfung
 # 03) Logdatei vorbereiten - Logging nach /var/log/darknas/YYYY-MM-DD_00_postinstall.log
-# 04) Marker-Verzeichnis vorbereiten - /etc/darknas/00_postinstall.conf erzeugen
+# 04) Konfiggurations-Verzeichnis vorbereiten - /etc/darknas/00_postinstall.conf erzeugen
 # 05) Systemupdate
 # 06) Zeitsynchronisation sicherstellen - Synchronisiere Systemzeit mit chrony...
 # 07) sudo installieren
 # 08) Admin-User "admin" anlegen oder aktualisieren
 # 09) Admin-User in sudo-Gruppe aufnehmen
 # 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
-# 11) Marker-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
+# 11) Konfigurations-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
 # 12) Abschluss
 
 #############################################
@@ -45,14 +45,14 @@ echo "Logdatei: $LOGFILE"
 echo
 
 #############################################
-# 04) Marker-Verzeichnis vorbereiten
+# 04) Konfigurations-Verzeichnis vorbereiten
 #############################################
-MARKERDIR="/etc/darknas"
-MARKERFILE="$MARKERDIR/00_postinstall.conf"
+CONFDIR="/etc/darknas"
+CONFFILE="$CONFDIR/00_postinstall.conf"
 
-mkdir -p "$MARKERDIR"
+mkdir -p "$CONFDIR"
 
-if [[ -f "$MARKERFILE" ]]; then
+if [[ -f "$CONFFILE" ]]; then
     echo "Marker-Datei existiert bereits. Das Skript wurde schon ausgeführt."
     exit 0
 fi
@@ -140,15 +140,15 @@ echo "sudoers-Datei erstellt: $SUDOERS_FILE"
 echo
 
 #############################################
-# 11) Marker-Datei erstellen
+# 11) Konfigurations-Datei erstellen
 #############################################
-echo "Erstelle Marker-Datei: $MARKERFILE"
+echo "Erstelle Marker-Datei: $CONFFILE"
 {
     echo "POSTINSTALL_DONE=1"
     echo "ADMIN_USER=$ADMINUSER"
-} > "$MARKERFILE"
+} > "$CONFFILE"
 
-chmod 600 "$MARKERFILE"
+chmod 600 "$CONFFILE"
 
 #############################################
 # 12) Abschluss
@@ -156,5 +156,5 @@ chmod 600 "$MARKERFILE"
 echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
 echo "Der Admin-User dieses Systems lautet: $ADMINUSER"
-echo "Information gespeichert in: $MARKERFILE"
+echo "Information gespeichert in: $CONFFILE"
 
