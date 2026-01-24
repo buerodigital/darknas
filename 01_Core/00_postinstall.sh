@@ -8,7 +8,7 @@
 # 03) Logdatei vorbereiten - Logging nach /var/log/darknas/YYYY-MM-DD_00_postinstall.log
 # 04) Marker-Verzeichnis vorbereiten - /etc/darknas/00_postinstall.conf erzeugen
 # 05) Systemupdate
-# 06) Zeitsynchronisation sicherstellen
+# 06) Zeitsynchronisation sicherstellen - Synchronisiere Systemzeit mit chrony...
 # 07) sudo installieren
 # 08) Admin-User "admin" anlegen oder aktualisieren
 # 09) Admin-User in sudo-Gruppe aufnehmen
@@ -70,19 +70,16 @@ echo
 #############################################
 # 06) Zeitsynchronisation sicherstellen
 #############################################
-echo "Synchronisiere Systemzeit..."
+echo "Synchronisiere Systemzeit mit chrony..."
 
-# systemd-timesyncd installieren
-apt-get install -y systemd-timesyncd
+# chrony installieren
+apt-get install -y chrony
 
 # Dienst aktivieren und starten
-systemctl enable systemd-timesyncd --now
+systemctl enable chrony --now
 
-# NTP aktivieren
-timedatectl set-ntp true
-
-# Dienst neu starten, um sofort zu synchronisieren
-systemctl restart systemd-timesyncd
+# Sofortige Synchronisation anstoßen
+chronyc makestep
 
 echo "Zeitsynchronisation abgeschlossen."
 echo
