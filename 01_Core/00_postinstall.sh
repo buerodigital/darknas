@@ -14,10 +14,13 @@
 # 09) Admin-User in sudo-Gruppe aufnehmen
 # 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
 # 11) Konfigurations-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
-# 12) ttyd installieren
-# 13) systemd-Service für ttyd erstellen
-# 14) Service aktivieren und starten
-# 15) Abschluss
+# 12) Abhängigkeiten für ttyd installieren
+# 13) ttyd aus GitHub klonen
+# 14) ttyd bauen
+# 15) ttyd installieren
+# 16) systemd-Service für ttyd erstellen
+# 17) ttyd Service aktivieren und starten
+# 18) Abschluss
 
 #############################################
 # 01) PATH sicherstellen
@@ -154,16 +157,60 @@ echo "Erstelle Marker-Datei: $CONFFILE"
 chmod 600 "$CONFFILE"
 
 #############################################
-# 12) ttyd installieren
+# 12) Abhängigkeiten für ttyd installieren
 #############################################
-echo "Installiere ttyd..."
+echo "=== Installiere ttyd (Build aus Quellen) ==="
+echo "Installiere Build-Abhängigkeiten..."
+
 apt-get update -y
-apt-get install -y ttyd
+apt-get install -y git build-essential cmake libjson-c-dev libwebsockets-dev libssl-dev
+
+echo "Abhängigkeiten installiert."
+echo
 
 #############################################
-# 13) systemd-Service für ttyd erstellen
+# 13) ttyd aus GitHub klonen
 #############################################
-echo "Erstelle systemd-Service für ttyd..."
+echo "Klone ttyd Repository..."
+
+cd /usr/local/src
+if [[ -d ttyd ]]; then
+    rm -rf ttyd
+fi
+
+git clone https://github.com/tsl0922/ttyd.git
+cd ttyd
+
+echo "Repository geklont."
+echo
+
+#############################################
+# 14) ttyd bauen
+#############################################
+echo "Baue ttyd..."
+
+mkdir build
+cd build
+cmake ..
+make -j"$(nproc)"
+
+echo "Build abgeschlossen."
+echo
+
+#############################################
+# 15) ttyd installieren
+#############################################
+echo "Installiere ttyd nach /usr/local/bin..."
+
+make install
+
+echo "Installation abgeschlossen."
+echo
+
+#############################################
+# 16) systemd-Service für ttyd erstellen
+#############################################
+echo "Erstelle systemd-Service..."
 
 SERVICE_FILE="/etc/systemd/system/ttyd.service"
 
@@ -174,7 +221,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/usr/bin/ttyd -p 7681 -u admin login
+ExecStart=/usr/local/bin/ttyd -p 7681 -u admin login
 Restart=always
 RestartSec=5
 
@@ -184,14 +231,19 @@ EOF
 
 chmod 644 "$SERVICE_FILE"
 
+echo "systemd-Service erstellt."
+echo
+
 #############################################
-# 14) Service aktivieren und starten
+# 17) ttyd Service aktivieren und starten
 #############################################
+echo "Aktiviere und starte ttyd..."
+
 systemctl daemon-reload
 systemctl enable ttyd --now
 
 #############################################
-# 15) Abschluss
+# 18) Abschluss
 #############################################
 echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
