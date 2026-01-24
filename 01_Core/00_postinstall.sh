@@ -14,7 +14,10 @@
 # 09) Admin-User in sudo-Gruppe aufnehmen
 # 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
 # 11) Konfigurations-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
-# 12) Abschluss
+# 12) ttyd installieren
+# 13) systemd-Service für ttyd erstellen
+# 14) Service aktivieren und starten
+# 15) Abschluss
 
 #############################################
 # 01) PATH sicherstellen
@@ -188,7 +191,7 @@ systemctl daemon-reload
 systemctl enable ttyd --now
 
 #############################################
-# 12) Abschluss
+# 15) Abschluss
 #############################################
 echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
