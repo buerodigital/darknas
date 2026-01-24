@@ -151,10 +151,50 @@ echo "Erstelle Marker-Datei: $CONFFILE"
 chmod 600 "$CONFFILE"
 
 #############################################
+# 12) ttyd installieren
+#############################################
+echo "Installiere ttyd..."
+apt-get update -y
+apt-get install -y ttyd
+
+#############################################
+# 13) systemd-Service für ttyd erstellen
+#############################################
+echo "Erstelle systemd-Service für ttyd..."
+
+SERVICE_FILE="/etc/systemd/system/ttyd.service"
+
+cat > "$SERVICE_FILE" << 'EOF'
+[Unit]
+Description=ttyd - Web Terminal
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/ttyd -p 7681 -u admin login
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 "$SERVICE_FILE"
+
+#############################################
+# 14) Service aktivieren und starten
+#############################################
+systemctl daemon-reload
+systemctl enable ttyd --now
+
+#############################################
 # 12) Abschluss
 #############################################
 echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
 echo "Der Admin-User dieses Systems lautet: $ADMINUSER"
 echo "Information gespeichert in: $CONFFILE"
+echo "ttyd wurde eingerichtet."
+echo "Öffne im Browser: http://<SERVER-IP>:7681"
+echo "Login: admin (Passwort wie gesetzt)"
 
