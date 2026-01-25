@@ -16,7 +16,12 @@ chown root:root /usr/local/sbin/00_postinstall.sh
 /usr/local/sbin/00_postinstall.sh
 ````
 
-http://IP:7681/
+SSH verbindung trennen
+````
+exit
+````
+
+http://IP:666/
 
 
 
