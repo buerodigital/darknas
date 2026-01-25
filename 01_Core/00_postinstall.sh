@@ -25,27 +25,34 @@
 #   18) Abschlussmeldung
 #
 # ============================================================
-#   Dieses Skript richtet ein vollständiges DarkNAS-Basissystem
-#   ein, inklusive:
-#     - Systemupdate
-#     - Zeit-Synchronisation
-#     - Admin-User
-#     - sudo-Konfiguration
-#     - vollständiger ttyd-Build aus Quellen
-#     - libwebsockets mit libuv (für PTY-Support)
+#   Zweck:
+#   Dieses Skript richtet das DarkNAS-Grundsystem ein:
+#     - Systemupdate und Zeitsynchronisation
+#     - Admin-User und sudo-Rechte
+#     - ttyd (Web-Terminal) aus Quellen gebaut
+#     - libwebsockets mit libuv (PTY-Support)
 #     - stabiler systemd-Service ohne PAM-Self-Spawn
 #
-#   Die Terminalausgabe ist bewusst minimal gehalten.
-#   Alle Details werden in die Logdatei geschrieben.
+#   Design:
+#     - Minimalistische, farbige Terminalausgabe
+#     - Vollständiges Logging nach /var/log/darknas/…
+#     - Idempotent durch Marker-Datei /etc/darknas/00_postinstall.conf
 # ============================================================
 
 
 #############################################
-# Hilfsfunktion: Minimalistische Ausgabe
+# Farbdefinitionen (DarkNAS Style)
 #############################################
-msg() {
-    echo "[DarkNAS] $1"
-}
+NC="\033[0m"
+CYAN="\033[36m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+RED="\033[31m"
+
+msg()      { echo -e "${CYAN}[DarkNAS]${NC} $1"; }
+msg_ok()   { echo -e "${GREEN}[DarkNAS]${NC} $1"; }
+msg_warn() { echo -e "${YELLOW}[DarkNAS]${NC} $1"; }
+msg_err()  { echo -e "${RED}[DarkNAS]${NC} $1"; }
 
 
 #############################################
@@ -58,7 +65,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # 02) Root-Prüfung
 #############################################
 if [[ $EUID -ne 0 ]]; then
-    echo "Dieses Skript muss als root ausgeführt werden."
+    msg_err "Dieses Skript muss als root ausgeführt werden."
     exit 1
 fi
 
@@ -72,7 +79,6 @@ mkdir -p "$LOGDIR"
 DATE=$(date +"%Y-%m-%d")
 LOGFILE="$LOGDIR/${DATE}_00_postinstall.log"
 
-# Alles (stdout + stderr) wird in die Logdatei gespiegelt
 exec > >(tee -a "$LOGFILE") 2>&1
 
 
@@ -80,16 +86,18 @@ exec > >(tee -a "$LOGFILE") 2>&1
 # DarkNAS Logo
 #############################################
 cat << "EOF"
-    ____             _      _   _    _    ____
-   |  _ \  __ _ _ __| | __ | \ | |  / \  / ___|
-   | | | |/ _´ | ´__| |/ / |  \| | / _ \ \___ \
-   | |_| | |_| | |  |   |  | |\  |/ ___ \ ___| |
-   |____/ \__._|_|  |_|\_\ |_| \_/_/   \_\____/
-Data belongs in the dark. Simple. Silent. Reliable.
+   ____             _      _   _   _   _____ 
+  |  _ \  __ _ _ __(_) ___| \ | | / \ | ____|
+  | | | |/ _` | '__| |/ __|  \| |/ _ \|  _|  
+  | |_| | (_| | |  | | (__| |\  / ___ \ |___ 
+  |____/ \__,_|_|  |_|\___|_| \_/_/   \_\____|
+  
+        Data belongs in the dark.
+        Simple. Silent. Reliable.
 EOF
 
 echo
-msg "Postinstall gestartet – Log: $LOGFILE"
+msg_ok "Postinstall gestartet – Log: $LOGFILE"
 echo
 
 
@@ -101,9 +109,8 @@ CONFFILE="$CONFDIR/00_postinstall.conf"
 
 mkdir -p "$CONFDIR"
 
-# Marker verhindert doppelte Ausführung
 if [[ -f "$CONFFILE" ]]; then
-    msg "Marker-Datei existiert – Skript wurde bereits ausgeführt."
+    msg_warn "Marker-Datei existiert – Skript wurde bereits ausgeführt."
     exit 0
 fi
 
@@ -114,21 +121,19 @@ fi
 msg "Systemupdate…"
 apt-get update -y >/dev/null 2>&1
 apt-get upgrade -y >/dev/null 2>&1
-msg "Systemupdate abgeschlossen."
+msg_ok "Systemupdate abgeschlossen."
 
 
 #############################################
-# 06) Zeitsynchronisation sicherstellen
+# 06) Zeitsynchronisation sicherstellen (chrony)
 #############################################
 msg "Installiere und aktiviere chrony…"
 
 apt-get install -y chrony >/dev/null 2>&1
 systemctl enable chrony --now >/dev/null 2>&1
-
-# Sofortige Zeitkorrektur
 chronyc makestep >/dev/null 2>&1
 
-msg "Zeitsynchronisation abgeschlossen."
+msg_ok "Zeitsynchronisation abgeschlossen."
 
 
 #############################################
@@ -137,6 +142,7 @@ msg "Zeitsynchronisation abgeschlossen."
 if ! command -v sudo >/dev/null 2>&1; then
     msg "Installiere sudo…"
     apt-get install -y sudo >/dev/null 2>&1
+    msg_ok "sudo installiert."
 else
     msg "sudo bereits installiert."
 fi
@@ -152,11 +158,11 @@ if id "$ADMINUSER" >/dev/null 2>&1; then
 else
     msg "Lege Benutzer '$ADMINUSER' an…"
     useradd -m -s /bin/bash "$ADMINUSER"
+    msg_ok "Benutzer '$ADMINUSER' angelegt."
 fi
 
-# Passwort setzen
 echo "${ADMINUSER}:pass" | chpasswd
-msg "Passwort gesetzt."
+msg_ok "Passwort für '$ADMINUSER' gesetzt."
 
 
 #############################################
@@ -164,6 +170,7 @@ msg "Passwort gesetzt."
 #############################################
 msg "Füge '$ADMINUSER' zur sudo-Gruppe hinzu…"
 usermod -aG sudo "$ADMINUSER"
+msg_ok "'$ADMINUSER' ist Mitglied der sudo-Gruppe."
 
 
 #############################################
@@ -179,8 +186,135 @@ msg "Erstelle sudoers-Datei…"
 } > "$SUDOERS_FILE"
 
 chmod 440 "$SUDOERS_FILE"
+msg_ok "sudoers-Datei erstellt."
 
 
 #############################################
 # 11) Marker-Konfigurationsdatei erstellen
-################################
+#############################################
+msg "Erstelle Marker-Datei…"
+
+{
+    echo "POSTINSTALL_DONE=1"
+    echo "ADMIN_USER=$ADMINUSER"
+} > "$CONFFILE"
+
+chmod 600 "$CONFFILE"
+msg_ok "Marker-Datei erstellt."
+
+
+#############################################
+# 12) Build-Abhängigkeiten für ttyd installieren
+#############################################
+msg "Installiere Build-Abhängigkeiten für ttyd…"
+
+apt-get update -y >/dev/null 2>&1
+apt-get install -y \
+    git build-essential cmake pkg-config \
+    libssl-dev libjson-c-dev zlib1g-dev \
+    libuv1-dev >/dev/null 2>&1
+
+msg_ok "Build-Abhängigkeiten installiert."
+
+
+#############################################
+# 13) libwebsockets klonen und mit libuv bauen
+#############################################
+msg "Baue libwebsockets (mit libuv)…"
+
+cd /usr/local/src
+rm -rf libwebsockets >/dev/null 2>&1
+git clone https://github.com/warmcat/libwebsockets.git >/dev/null 2>&1
+
+cd libwebsockets
+mkdir build >/dev/null 2>&1
+cd build
+
+cmake .. \
+    -DLWS_WITH_LIBUV=ON \
+    -DLWS_WITH_SERVER=ON \
+    -DLWS_WITH_CLIENT=ON \
+    -DLWS_WITH_HTTP2=ON \
+    -DLWS_WITHOUT_TESTAPPS=ON \
+    >/dev/null 2>&1
+
+make -j"$(nproc)" >/dev/null 2>&1
+make install >/dev/null 2>&1
+
+export PATH="$PATH:/sbin:/usr/sbin"
+ldconfig >/dev/null 2>&1
+
+msg_ok "libwebsockets erfolgreich gebaut."
+
+
+#############################################
+# 14) ttyd klonen und bauen
+#############################################
+msg "Klone und baue ttyd…"
+
+cd /usr/local/src
+rm -rf ttyd >/dev/null 2>&1
+git clone https://github.com/tsl0922/ttyd.git >/dev/null 2>&1
+
+cd ttyd
+mkdir build >/dev/null 2>&1
+cd build
+
+cmake .. >/dev/null 2>&1
+make -j"$(nproc)" >/dev/null 2>&1
+
+msg_ok "ttyd erfolgreich gebaut."
+
+
+#############################################
+# 15) ttyd installieren
+#############################################
+msg "Installiere ttyd…"
+
+make install >/dev/null 2>&1
+
+msg_ok "ttyd erfolgreich installiert."
+
+
+#############################################
+# 16) systemd-Service für ttyd erstellen
+#############################################
+msg "Erstelle systemd-Service…"
+
+cat > /etc/systemd/system/ttyd.service << 'EOF'
+[Unit]
+Description=ttyd - Web Terminal
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ttyd --writable -p 7681 login
+Restart=always
+RestartSec=2
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+msg_ok "ttyd systemd-Service-Datei erstellt."
+
+
+#############################################
+# 17) ttyd Service aktivieren und starten
+#############################################
+msg "Aktiviere und starte ttyd-Service…"
+
+systemctl daemon-reload >/dev/null 2>&1
+systemctl enable ttyd --now >/dev/null 2>&1
+
+msg_ok "ttyd systemd-Service aktiviert und gestartet."
+
+
+#############################################
+# 18) Abschluss
+#############################################
+msg_ok "Postinstall abgeschlossen."
+msg "Admin-User: $ADMINUSER"
+msg "ttyd läuft auf Port 7681."
+msg "Öffne im Browser: http://<SERVER-IP>:7681"
