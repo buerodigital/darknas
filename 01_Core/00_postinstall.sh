@@ -39,6 +39,7 @@
 #     - Idempotent durch Marker-Datei /etc/darknas/00_postinstall.conf
 # ============================================================
 
+clear
 
 #############################################
 # Farbdefinitionen (DarkNAS Style)
