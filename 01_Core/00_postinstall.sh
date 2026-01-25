@@ -183,7 +183,6 @@ done
 
 echo "${ADMINUSER}:${PW1}" | chpasswd
 msg_ok "Passwort für '$ADMINUSER' gesetzt."
-."
 
 
 #############################################
