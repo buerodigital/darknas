@@ -24,7 +24,9 @@
 #   17) ttyd Service aktivieren und starten
 #   18) UFW installieren
 #   19) UFW konfigurieren (automatische LAN-Erkennung)
-#   20) Abschlussmeldung
+#   20) Fail2ban installieren
+#   21) Fail2ban konfigurieren (SSH, ttyd, SMB)
+#   22) Abschlussmeldung
 #
 # ============================================================
 #   Zweck:
@@ -356,9 +358,70 @@ echo "y" | ufw enable >/dev/null 2>&1
 
 msg_ok "UFW Firewall aktiviert und konfiguriert."
 
+#############################################
+# 20) Fail2ban installieren
+#############################################
+msg "Installiere Fail2ban…"
+
+apt-get install -y fail2ban >/dev/null 2>&1
+
+msg_ok "Fail2ban installiert."
+
 
 #############################################
-# 20) Abschluss
+# 21) Fail2ban konfigurieren (SSH, ttyd, SMB)
+#############################################
+msg "Konfiguriere Fail2ban…"
+
+# Fail2ban-Konfigurationsverzeichnis
+F2B_JAIL="/etc/fail2ban/jail.local"
+
+cat > "$F2B_JAIL" << 'EOF'
+[DEFAULT]
+# Ban-Dauer: 10 Minuten
+bantime = 10m
+# Beobachtungszeitraum: 10 Minuten
+findtime = 10m
+# Anzahl Fehlversuche bis Ban
+maxretry = 5
+# Firewall-Aktion
+banaction = ufw
+
+# -------------------------
+# SSH Schutz
+# -------------------------
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+
+# -------------------------
+# ttyd Schutz (über PAM)
+# ttyd nutzt login → auth.log
+# -------------------------
+[ttyd]
+enabled = true
+port = 7681
+filter = sshd
+logpath = /var/log/auth.log
+
+# -------------------------
+# SMB Schutz (optional)
+# -------------------------
+[smb]
+enabled = true
+port = 445
+logpath = /var/log/samba/log.smbd
+EOF
+
+# Fail2ban neu starten
+systemctl restart fail2ban >/dev/null 2>&1
+
+msg_ok "Fail2ban konfiguriert und gestartet."
+
+
+#############################################
+# 22) Abschluss
 #############################################
 msg_ok "Postinstall abgeschlossen."
 msg "Admin-User: $ADMINUSER"
