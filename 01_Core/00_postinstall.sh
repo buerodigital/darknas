@@ -308,7 +308,8 @@ Description=ttyd - Web Terminal
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/ttyd --writable -p 7681 login
+# ExecStart=/usr/local/bin/ttyd --writable -p 7681 login
+ExecStart=/usr/local/bin/ttyd --writable -p 666 -u "$ADMINUSER" login
 Restart=always
 RestartSec=2
 User=root
