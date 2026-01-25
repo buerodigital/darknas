@@ -4,7 +4,7 @@
 #
 
 #############################################
-# Minimalistische Terminalausgabe
+# 00) Minimalistische Terminalausgabe
 #############################################
 msg() {
     echo "[DarkNAS] $1"
