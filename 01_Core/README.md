@@ -8,7 +8,11 @@ chmod 700 /usr/local/sbin/00_postinstall.sh
 chown root:root /usr/local/sbin/00_postinstall.sh
 
 /usr/local/sbin/00_postinstall.sh
-```` 
+````
+
+http://IP:7681/
+
+
 
 |Zweck|Pfad  |Warum|Berechtigungen   |Kurzbewertung   |
 |-----|-----|-----|-----|-----|
