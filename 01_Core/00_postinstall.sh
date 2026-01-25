@@ -12,7 +12,7 @@
 #   05) Systemupdate
 #   06) Zeitsynchronisation sicherstellen (chrony)
 #   07) sudo installieren
-#   08) Admin-User "admin" anlegen oder aktualisieren
+#   08) Admin-User "darkroot" anlegen oder aktualisieren
 #   09) Admin-User in sudo-Gruppe aufnehmen
 #   10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
 #   11) Marker-Konfigurationsdatei erstellen
@@ -154,7 +154,7 @@ fi
 #############################################
 # 08) Admin-User anlegen/aktualisieren
 #############################################
-ADMINUSER="admin"
+ADMINUSER="darkroot"
 
 if id "$ADMINUSER" >/dev/null 2>&1; then
     msg "Benutzer '$ADMINUSER' existiert bereits."
@@ -164,8 +164,26 @@ else
     msg_ok "Benutzer '$ADMINUSER' angelegt."
 fi
 
-echo "${ADMINUSER}:pass" | chpasswd
+# Passwort-Abfrage mit Bestätigung
+while true; do
+    echo -n "Passwort für '$ADMINUSER' eingeben: "
+    read -s PW1
+    echo
+
+    echo -n "Passwort erneut eingeben: "
+    read -s PW2
+    echo
+
+    if [[ "$PW1" == "$PW2" ]]; then
+        break
+    else
+        msg "Passwörter stimmen nicht überein. Bitte erneut versuchen."
+    fi
+done
+
+echo "${ADMINUSER}:${PW1}" | chpasswd
 msg_ok "Passwort für '$ADMINUSER' gesetzt."
+."
 
 
 #############################################
