@@ -203,11 +203,12 @@ msg "Erstelle sudoers-Datei…"
 
 {
     echo "# DarkNAS Admin-Rechte"
-    echo "admin ALL=(ALL) NOPASSWD: ALL"
+    echo "${ADMINUSER} ALL=(ALL) NOPASSWD: ALL"
 } > "$SUDOERS_FILE"
 
 chmod 440 "$SUDOERS_FILE"
 msg_ok "sudoers-Datei erstellt."
+
 
 
 #############################################
