@@ -1,8 +1,12 @@
 ````
 apt install wget
+
 wget --no-check-certificate https://darknas.ideenrocker.com/00_postinstall.sh -O /usr/local/sbin/00_postinstall.sh
-chmod 700 /usr/local/sbin/00_postinstall.sh 
+
+chmod 700 /usr/local/sbin/00_postinstall.sh
+
 chown root:root /usr/local/sbin/00_postinstall.sh
+
 /usr/local/sbin/00_postinstall.sh
 ```` 
 
