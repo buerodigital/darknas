@@ -5,20 +5,20 @@
 # DarkNAS Grundsystem:
 # 01) PATH sicherstellen
 # 02) Root-Prüfung
-# 03) Logdatei vorbereiten - Logging nach /var/log/darknas/YYYY-MM-DD_00_postinstall.log
-# 04) Konfiggurations-Verzeichnis vorbereiten - /etc/darknas/00_postinstall.conf erzeugen
+# 03) Logdatei vorbereiten
+# 04) Konfigurations-Verzeichnis vorbereiten
 # 05) Systemupdate
-# 06) Zeitsynchronisation sicherstellen - Synchronisiere Systemzeit mit chrony...
+# 06) Zeitsynchronisation sicherstellen
 # 07) sudo installieren
 # 08) Admin-User "admin" anlegen oder aktualisieren
 # 09) Admin-User in sudo-Gruppe aufnehmen
 # 10) sudoers-Datei für Admin-User erstellen (NOPASSWD)
-# 11) Konfigurations-Datei erstellen - /etc/darknas/00_postinstall.conf erzeugen
-# 12) Abhängigkeiten für ttyd installieren
-# 13) ttyd aus GitHub klonen
-# 14) ttyd bauen
-# 15) ttyd installieren
-# 16) systemd-Service für ttyd erstellen
+# 11) Konfigurations-Datei erstellen
+# 12) Abhängigkeiten für ttyd installieren (NEU)
+# 13) libwebsockets klonen und bauen (NEU)
+# 14) ttyd klonen und bauen (NEU)
+# 15) ttyd installieren (NEU)
+# 16) systemd-Service für ttyd erstellen (NEU)
 # 17) ttyd Service aktivieren und starten
 # 18) Abschluss
 
@@ -72,19 +72,13 @@ apt-get upgrade -y
 echo "--- Systemupdate abgeschlossen ---"
 echo
 
-
 #############################################
 # 06) Zeitsynchronisation sicherstellen
 #############################################
 echo "Synchronisiere Systemzeit mit chrony..."
 
-# chrony installieren
 apt-get install -y chrony
-
-# Dienst aktivieren und starten
 systemctl enable chrony --now
-
-# Sofortige Synchronisation anstoßen
 chronyc makestep
 
 echo "Zeitsynchronisation abgeschlossen."
@@ -106,7 +100,6 @@ echo
 #############################################
 ADMINUSER="admin"
 
-# Prüfen, ob der Benutzer existiert
 if id "$ADMINUSER" >/dev/null 2>&1; then
     echo "Benutzer '$ADMINUSER' existiert bereits."
 else
@@ -114,7 +107,6 @@ else
     useradd -m -s /bin/bash "$ADMINUSER"
 fi
 
-# Passwort setzen (immer)
 echo "Setze Passwort für Benutzer '$ADMINUSER'..."
 echo "${ADMINUSER}:pass" | chpasswd
 
@@ -163,38 +155,61 @@ echo "=== Installiere ttyd (Build aus Quellen) ==="
 echo "Installiere Build-Abhängigkeiten..."
 
 apt-get update -y
-apt-get install -y git build-essential cmake libjson-c-dev libwebsockets-dev libssl-dev
+apt-get install -y \
+    git build-essential cmake pkg-config \
+    libssl-dev libjson-c-dev zlib1g-dev \
+    libuv1-dev
 
 echo "Abhängigkeiten installiert."
 echo
 
 #############################################
-# 13) ttyd aus GitHub klonen
+# 13) libwebsockets klonen und bauen
 #############################################
-echo "Klone ttyd Repository..."
+echo "Baue libwebsockets (mit libuv)..."
 
 cd /usr/local/src
-if [[ -d ttyd ]]; then
-    rm -rf ttyd
-fi
+rm -rf libwebsockets
+git clone https://github.com/warmcat/libwebsockets.git
 
-git clone https://github.com/tsl0922/ttyd.git
-cd ttyd
+cd libwebsockets
+mkdir build
+cd build
 
-echo "Repository geklont."
+cmake .. \
+    -DLWS_WITH_LIBUV=ON \
+    -DLWS_WITH_SERVER=ON \
+    -DLWS_WITH_CLIENT=ON \
+    -DLWS_WITH_HTTP2=ON \
+    -DLWS_WITHOUT_TESTAPPS=ON
+
+make -j"$(nproc)"
+make install
+
+# ldconfig sicherstellen
+export PATH="$PATH:/sbin:/usr/sbin"
+ldconfig
+
+echo "libwebsockets erfolgreich gebaut."
 echo
 
 #############################################
-# 14) ttyd bauen
+# 14) ttyd klonen und bauen
 #############################################
-echo "Baue ttyd..."
+echo "Klone und baue ttyd..."
 
+cd /usr/local/src
+rm -rf ttyd
+git clone https://github.com/tsl0922/ttyd.git
+
+cd ttyd
 mkdir build
 cd build
+
 cmake ..
 make -j"$(nproc)"
 
-echo "Build abgeschlossen."
+echo "ttyd Build abgeschlossen."
 echo
 
 #############################################
@@ -220,10 +235,12 @@ Description=ttyd - Web Terminal
 After=network.target
 
 [Service]
-User=root
-ExecStart=/usr/local/bin/ttyd -p 7681 -u admin login
+ExecStart=/usr/local/bin/ttyd --writable -p 7681 login
 Restart=always
-RestartSec=5
+RestartSec=2
+User=root
+Group=root
+# Kein PAMName, um Self-Spawn zu verhindern
 
 [Install]
 WantedBy=multi-user.target
@@ -249,7 +266,6 @@ echo
 echo "=== DarkNAS Postinstall abgeschlossen: $(date) ==="
 echo "Der Admin-User dieses Systems lautet: $ADMINUSER"
 echo "Information gespeichert in: $CONFFILE"
-echo "ttyd wurde eingerichtet."
+echo "ttyd wurde erfolgreich eingerichtet."
 echo "Öffne im Browser: http://<SERVER-IP>:7681"
 echo "Login: admin (Passwort wie gesetzt)"
-
