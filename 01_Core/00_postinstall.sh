@@ -22,7 +22,9 @@
 #   15) ttyd installieren
 #   16) systemd-Service für ttyd erstellen
 #   17) ttyd Service aktivieren und starten
-#   18) Abschlussmeldung
+#   18) UFW installieren
+#   19) UFW konfigurieren (automatische LAN-Erkennung)
+#   20) Abschlussmeldung
 #
 # ============================================================
 #   Zweck:
@@ -309,9 +311,54 @@ systemctl enable ttyd --now >/dev/null 2>&1
 
 msg_ok "ttyd systemd-Service aktiviert und gestartet."
 
+#############################################
+# 18) UFW installieren
+#############################################
+msg "Installiere UFW Firewall…"
+
+apt-get install -y ufw >/dev/null 2>&1
+
+msg_ok "UFW installiert."
+
 
 #############################################
-# 18) Abschluss
+# 19) UFW konfigurieren (automatische LAN-Erkennung)
+#############################################
+msg "Ermittle internes LAN…"
+
+# Erste globale IPv4-Adresse extrahieren
+LAN_CIDR=$(ip -o -f inet addr show | awk '/scope global/ {print $4; exit}')
+
+if [[ -z "$LAN_CIDR" ]]; then
+    msg_warn "Konnte internes LAN nicht automatisch erkennen. Setze Fallback 192.168.0.0/16."
+    LAN_CIDR="192.168.0.0/16"
+else
+    msg_ok "Internes LAN erkannt: $LAN_CIDR"
+fi
+
+msg "Richte UFW Firewall-Regeln ein…"
+
+# Standard-Policies
+ufw default deny incoming >/dev/null 2>&1
+ufw default allow outgoing >/dev/null 2>&1
+
+# Externe Freigaben
+ufw allow 80/tcp    >/dev/null 2>&1   # HTTP extern
+ufw allow 443/tcp   >/dev/null 2>&1   # HTTPS extern
+
+# Interne Freigaben
+ufw allow from "$LAN_CIDR" to any port 22    proto tcp >/dev/null 2>&1   # SSH intern
+ufw allow from "$LAN_CIDR" to any port 7681  proto tcp >/dev/null 2>&1   # ttyd intern
+ufw allow from "$LAN_CIDR" to any port 445   proto tcp >/dev/null 2>&1   # SMB intern
+
+# Aktivieren (ohne Nachfrage)
+echo "y" | ufw enable >/dev/null 2>&1
+
+msg_ok "UFW Firewall aktiviert und konfiguriert."
+
+
+#############################################
+# 20) Abschluss
 #############################################
 msg_ok "Postinstall abgeschlossen."
 msg "Admin-User: $ADMINUSER"
