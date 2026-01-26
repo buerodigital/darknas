@@ -16,12 +16,8 @@ chown root:root /usr/local/sbin/00_postinstall.sh
 /usr/local/sbin/00_postinstall.sh
 ````
 
-SSH verbindung trennen
-````
-exit
-````
-
-http://IP:666/
+Nach dem Neustart kann die Konsole via Browser geöffnet werden
+http://IP:7681/
 
 
 
