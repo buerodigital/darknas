@@ -41,6 +41,9 @@ clear
 # Hostname fuer DarkNAS
 HOSTNAME_DARKNAS="darkNAS"
 
+# IP des darkNAS Systems
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
 # Admin-Benutzer fuer DarkNAS
 ADMINUSER="darkroot"
 
@@ -323,8 +326,6 @@ fi
 # 19) systemd-Service für ttyd erstellen
 #############################################
 msg "Erstelle systemd-Service..."
-
-SERVER_IP=$(hostname -I | awk '{print $1}')
 
 cat > /etc/systemd/system/ttyd.service << EOF
 [Unit]
