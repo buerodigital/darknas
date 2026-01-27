@@ -255,9 +255,9 @@ msg_ok "Build-Abhängigkeiten installiert."
 
 
 #############################################
-# 15) libwebsockets klonen und bauen (mit libev)
+# 15) libwebsockets klonen und bauen (mit libuv)
 #############################################
-msg "Baue libwebsockets (mit libev)..."
+msg "Baue libwebsockets (mit libuv)..."
 
 cd /usr/local/src
 rm -rf libwebsockets >/dev/null 2>&1
@@ -268,7 +268,7 @@ mkdir build >/dev/null 2>&1
 cd build
 
 cmake .. \
-    -DLWS_WITH_LIBEV=ON \
+    -DLWS_WITH_LIBUV=ON \
     -DLWS_WITH_SERVER=ON \
     -DLWS_WITH_CLIENT=ON \
     -DLWS_WITH_HTTP2=ON \
