@@ -246,15 +246,15 @@ apt-get update -y >/dev/null 2>&1
 apt-get install -y \
     git build-essential cmake pkg-config \
     libssl-dev libjson-c-dev zlib1g-dev \
-    libuv1-dev >/dev/null 2>&1
+    libev-dev >/dev/null 2>&1
 
 msg_ok "Build-Abhängigkeiten installiert."
 
 
 #############################################
-# 15) libwebsockets klonen und bauen
+# 15) libwebsockets klonen und bauen (mit libev)
 #############################################
-msg "Baue libwebsockets (mit libuv)..."
+msg "Baue libwebsockets (mit libev)..."
 
 cd /usr/local/src
 rm -rf libwebsockets >/dev/null 2>&1
@@ -265,7 +265,7 @@ mkdir build >/dev/null 2>&1
 cd build
 
 cmake .. \
-    -DLWS_WITH_LIBUV=ON \
+    -DLWS_WITH_LIBEV=ON \
     -DLWS_WITH_SERVER=ON \
     -DLWS_WITH_CLIENT=ON \
     -DLWS_WITH_HTTP2=ON \
@@ -332,7 +332,7 @@ Description=ttyd - Web Terminal
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/ttyd --writable -p ${TTYD_PORT} -u ${ADMINUSER} login
+ExecStart=/usr/local/bin/ttyd --writable -p ${TTYD_PORT} login
 Restart=always
 RestartSec=2
 User=${TTYDUSER}
