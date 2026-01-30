@@ -418,12 +418,6 @@ enabled = true
 port = ssh
 logpath = /var/log/auth.log
 
-[ttyd]
-enabled = true
-port = ${TTYD_PORT}
-filter = sshd
-logpath = /var/log/auth.log
-
 [smb]
 enabled = true
 port = 445
