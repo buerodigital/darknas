@@ -72,16 +72,16 @@ GREEN="\033[32m"
 YELLOW="\033[33m"
 RED="\033[31m"
 
-msg()      { echo -e "${CYAN}[DarkNAS]${NC} $1"; }
-msg_ok()   { echo -e "${GREEN}[DarkNAS]${NC} $1"; }
-msg_warn() { echo -e "${YELLOW}[DarkNAS]${NC} $1"; }
-msg_err()  { echo -e "${RED}[DarkNAS]${NC} $1"; }
+msg()      { echo -e "${CYAN}[DarkNAS]${NC} $1" >/dev/tty; }
+msg_ok()   { echo -e "${GREEN}[DarkNAS]${NC} $1" >/dev/tty; }
+msg_warn() { echo -e "${YELLOW}[DarkNAS]${NC} $1" >/dev/tty; }
+msg_err()  { echo -e "${RED}[DarkNAS]${NC} $1" >/dev/tty; }
 
 
 #############################################
 # DarkNAS Logo
 #############################################
-cat << "EOF"
+cat >/dev/tty << "EOF"
     ____             _      _   _    _    ____
    |  _ \  __ _ _ __| | __ | \ | |  / \  / ___|
    | | | |/ _´ | ´__| |/ / |  \| | / _ \ \___ \
@@ -131,7 +131,7 @@ fi
 # 05) Logdatei vorbereiten
 #############################################
 mkdir -p "$LOGDIR"
-exec > >(tee -a "$LOGFILE") 2>&1
+exec >"$LOGFILE" 2>&1
 
 
 
