@@ -150,8 +150,8 @@ fi
 # 07) Systemupdate
 #############################################
 msg "Systemupdate..."
-apt-get update -y >/dev/null 2>&1
-apt-get upgrade -y >/dev/null 2>&1
+apt-get update -y
+apt-get upgrade -y
 msg_ok "Systemupdate abgeschlossen."
 
 
@@ -159,18 +159,18 @@ msg_ok "Systemupdate abgeschlossen."
 # 08) Zeitsynchronisation sicherstellen (chrony)
 #############################################
 msg "Installiere und aktiviere chrony..."
-apt-get install -y chrony >/dev/null 2>&1
-systemctl enable chrony --now >/dev/null 2>&1
-chronyc makestep >/dev/null 2>&1
+apt-get install -y chrony
+systemctl enable chrony --now
+chronyc makestep
 msg_ok "Zeitsynchronisation abgeschlossen."
 
 
 #############################################
 # 09) sudo installieren
 #############################################
-if ! command -v sudo >/dev/null 2>&1; then
+if ! command -v sudo; then
     msg "Installiere sudo..."
-    apt-get install -y sudo >/dev/null 2>&1
+    apt-get install -y sudo
     msg_ok "sudo installiert."
 else
     msg "sudo bereits installiert."
@@ -180,7 +180,7 @@ fi
 #############################################
 # 10) Admin-User anlegen/aktualisieren
 #############################################
-if id "$ADMINUSER" >/dev/null 2>&1; then
+if id "$ADMINUSER"; then
     msg "Benutzer '$ADMINUSER' existiert bereits."
 else
     msg "Lege Benutzer '$ADMINUSER' an..."
@@ -245,11 +245,10 @@ msg_ok "Marker-Datei erstellt."
 #############################################
 msg "Installiere Build-Abhängigkeiten für ttyd..."
 
-apt-get update -y >/dev/null 2>&1
 apt-get install -y \
     git build-essential cmake pkg-config \
     libssl-dev libjson-c-dev zlib1g-dev \
-    libuv1-dev >/dev/null 2>&1
+    libuv1-dev
 
 msg_ok "Build-Abhängigkeiten installiert."
 
@@ -260,11 +259,11 @@ msg_ok "Build-Abhängigkeiten installiert."
 msg "Baue libwebsockets (mit libuv)..."
 
 cd /usr/local/src
-rm -rf libwebsockets >/dev/null 2>&1
-git clone https://github.com/warmcat/libwebsockets.git >/dev/null 2>&1
+rm -rf libwebsockets
+git clone https://github.com/warmcat/libwebsockets.git
 
 cd libwebsockets
-mkdir build >/dev/null 2>&1
+mkdir build
 cd build
 
 cmake .. \
@@ -273,11 +272,10 @@ cmake .. \
     -DLWS_WITH_CLIENT=ON \
     -DLWS_WITH_HTTP2=ON \
     -DLWS_WITHOUT_TESTAPPS=ON \
-    >/dev/null 2>&1
 
-make -j"$(nproc)" >/dev/null 2>&1
-make install >/dev/null 2>&1
-/sbin/ldconfig >/dev/null 2>&1
+make -j"$(nproc)"
+make install
+/sbin/ldconfig
 
 msg_ok "libwebsockets erfolgreich gebaut."
 
@@ -288,15 +286,15 @@ msg_ok "libwebsockets erfolgreich gebaut."
 msg "Klone und baue ttyd..."
 
 cd /usr/local/src
-rm -rf ttyd >/dev/null 2>&1
-git clone https://github.com/tsl0922/ttyd.git >/dev/null 2>&1
+rm -rf ttyd
+git clone https://github.com/tsl0922/ttyd.git
 
 cd ttyd
-mkdir build >/dev/null 2>&1
+mkdir build
 cd build
 
-cmake .. >/dev/null 2>&1
-make -j"$(nproc)" >/dev/null 2>&1
+cmake ..
+make -j"$(nproc)"
 
 msg_ok "ttyd erfolgreich gebaut."
 
@@ -305,8 +303,8 @@ msg_ok "ttyd erfolgreich gebaut."
 # 17) ttyd installieren
 #############################################
 msg "Installiere ttyd..."
-make install >/dev/null 2>&1
-/sbin/ldconfig >/dev/null 2>&1
+make install
+/sbin/ldconfig
 msg_ok "ttyd erfolgreich installiert."
 
 
@@ -321,7 +319,7 @@ openssl req -x509 -nodes -days 3650 \
   -newkey rsa:2048 \
   -keyout /etc/ttyd/ssl/ttyd.key \
   -out /etc/ttyd/ssl/ttyd.crt \
-  -subj "/CN=darkNAS" >/dev/null 2>&1
+  -subj "/CN=darkNAS"
 
 chmod 600 /etc/ttyd/ssl/ttyd.key
 msg_ok "SSL-Zertifikate erstellt."
@@ -364,8 +362,8 @@ msg_ok "ttyd systemd-Service-Datei erstellt."
 #############################################
 msg "Aktiviere und starte ttyd-Service..."
 
-systemctl daemon-reload >/dev/null 2>&1
-systemctl enable ttyd --now >/dev/null 2>&1
+systemctl daemon-reload
+systemctl enable ttyd --now
 
 msg_ok "ttyd systemd-Service aktiviert und gestartet."
 
@@ -374,7 +372,7 @@ msg_ok "ttyd systemd-Service aktiviert und gestartet."
 # 21) UFW installieren
 #############################################
 msg "Installiere UFW Firewall..."
-apt-get install -y ufw >/dev/null 2>&1
+apt-get install -y ufw
 msg_ok "UFW installiert."
 
 
@@ -391,17 +389,17 @@ msg_ok "Internes LAN erkannt: $LAN_CIDR"
 
 msg "Richte UFW Firewall-Regeln ein..."
 
-ufw default deny incoming >/dev/null 2>&1
-ufw default allow outgoing >/dev/null 2>&1
+ufw default deny incoming
+ufw default allow outgoing
 
-ufw allow 80/tcp >/dev/null 2>&1
-ufw allow 443/tcp >/dev/null 2>&1
+ufw allow 80/tcp
+ufw allow 443/tcp
 
-ufw allow from "$LAN_CIDR" to any port 22 proto tcp >/dev/null 2>&1
-ufw allow from "$LAN_CIDR" to any port ${TTYD_PORT} proto tcp >/dev/null 2>&1
-ufw allow from "$LAN_CIDR" to any port 445 proto tcp >/dev/null 2>&1
+ufw allow from "$LAN_CIDR" to any port 22 proto tcp
+ufw allow from "$LAN_CIDR" to any port ${TTYD_PORT} proto tcp
+ufw allow from "$LAN_CIDR" to any port 445 proto tcp
 
-echo "y" | ufw enable >/dev/null 2>&1
+echo "y" | ufw enable
 
 msg_ok "UFW Firewall aktiviert und konfiguriert."
 
@@ -410,7 +408,7 @@ msg_ok "UFW Firewall aktiviert und konfiguriert."
 # 23) Fail2ban installieren
 #############################################
 msg "Installiere Fail2ban..."
-apt-get install -y fail2ban >/dev/null 2>&1
+apt-get install -y fail2ban
 msg_ok "Fail2ban installiert."
 
 
@@ -438,7 +436,7 @@ port = 445
 logpath = /var/log/samba/log.smbd
 EOF
 
-systemctl restart fail2ban >/dev/null 2>&1
+systemctl restart fail2ban
 msg_ok "Fail2ban konfiguriert und gestartet."
 
 
