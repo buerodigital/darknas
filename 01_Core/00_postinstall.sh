@@ -3,7 +3,7 @@
 # 00_postinstall.sh – DarkNAS Grundsystem
 #
 # ============================================================
-#                    I N H A L T S V E R Z E I C H N I S
+#                    I N H A L T S  V E R Z E I C H N I S
 # ============================================================
 #   01) Variablen definieren
 #   02) Hostname setzen
@@ -22,8 +22,8 @@
 #   15) libwebsockets klonen und mit libuv bauen
 #   16) ttyd klonen und bauen
 #   17) ttyd installieren
-#   18) ttyd-Systemuser anlegen
-#   19) systemd-Service für ttyd erstellen
+#   18) SSL-Zertifikate für ttyd erstellen
+#   19) systemd-Service für ttyd erstellen (nur $ADMINUSER, SSL)
 #   20) ttyd-Service aktivieren und starten
 #   21) UFW installieren
 #   22) UFW konfigurieren (automatische LAN-Erkennung)
