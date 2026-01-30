@@ -416,6 +416,7 @@ banaction = ufw
 [sshd]
 enabled = true
 port = ssh
+backend = systemd
 logpath = /var/log/auth.log
 
 [smb]
