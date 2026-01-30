@@ -188,15 +188,19 @@ else
     msg_ok "Benutzer '$ADMINUSER' angelegt."
 fi
 
-# Passwort-Abfrage
 while true; do
-    echo -n "          Passwort für '$ADMINUSER' eingeben: "
-    read -s PW1
-    echo
-    echo -n "          Passwort erneut eingeben: "
-    read -s PW2
-    echo
+    # Prompt 1
+    echo -n "          Passwort für '$ADMINUSER' eingeben: " >/dev/tty
+    read -s PW1 < /dev/tty
+    echo >/dev/tty
+
+    # Prompt 2
+    echo -n "          Passwort erneut eingeben: " >/dev/tty
+    read -s PW2 < /dev/tty
+    echo >/dev/tty
+
     [[ "$PW1" == "$PW2" ]] && break
+
     msg_err "Passwörter stimmen nicht überein."
 done
 
