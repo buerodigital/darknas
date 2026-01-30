@@ -249,7 +249,7 @@ apt-get update -y >/dev/null 2>&1
 apt-get install -y \
     git build-essential cmake pkg-config \
     libssl-dev libjson-c-dev zlib1g-dev \
-    libev-dev >/dev/null 2>&1
+    libuv1-dev >/dev/null 2>&1
 
 msg_ok "Build-Abhängigkeiten installiert."
 
@@ -277,7 +277,7 @@ cmake .. \
 
 make -j"$(nproc)" >/dev/null 2>&1
 make install >/dev/null 2>&1
-ldconfig >/dev/null 2>&1
+/sbin/ldconfig >/dev/null 2>&1
 
 msg_ok "libwebsockets erfolgreich gebaut."
 
@@ -306,38 +306,51 @@ msg_ok "ttyd erfolgreich gebaut."
 #############################################
 msg "Installiere ttyd..."
 make install >/dev/null 2>&1
+/sbin/ldconfig >/dev/null 2>&1
 msg_ok "ttyd erfolgreich installiert."
 
 
 #############################################
-# 18) ttyd-Systemuser anlegen
+# 18) SSL-Zertifikate für ttyd erstellen
 #############################################
-msg "Erstelle Systemuser '$TTYDUSER'..."
+msg "Erstelle SSL-Zertifikate für ttyd..."
 
-if ! id "$TTYDUSER" >/dev/null 2>&1; then
-    useradd -r -s /usr/sbin/nologin -M "$TTYDUSER"
-    msg_ok "Systemuser '$TTYDUSER' erstellt."
-else
-    msg "Systemuser '$TTYDUSER' existiert bereits."
-fi
+mkdir -p /etc/ttyd/ssl
+
+openssl req -x509 -nodes -days 3650 \
+  -newkey rsa:2048 \
+  -keyout /etc/ttyd/ssl/ttyd.key \
+  -out /etc/ttyd/ssl/ttyd.crt \
+  -subj "/CN=darkNAS" >/dev/null 2>&1
+
+chmod 600 /etc/ttyd/ssl/ttyd.key
+msg_ok "SSL-Zertifikate erstellt."
 
 
 #############################################
 # 19) systemd-Service für ttyd erstellen
+# → nur Login für $ADMINUSER
+# → HTTPS aktiviert
 #############################################
 msg "Erstelle systemd-Service..."
 
 cat > /etc/systemd/system/ttyd.service << EOF
 [Unit]
-Description=ttyd - Web Terminal
+Description=ttyd - Web Terminal (SSL)
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/ttyd --writable -p ${TTYD_PORT} login
+ExecStart=/usr/local/bin/ttyd \
+  --ssl \
+  --ssl-cert /etc/ttyd/ssl/ttyd.crt \
+  --ssl-key  /etc/ttyd/ssl/ttyd.key \
+  --writable \
+  -p ${TTYD_PORT} \
+  /bin/su - ${ADMINUSER}
 Restart=always
 RestartSec=2
-User=${TTYDUSER}
-Group=${TTYDUSER}
+User=root
+Group=root
 
 [Install]
 WantedBy=multi-user.target
