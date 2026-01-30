@@ -451,9 +451,14 @@ msg_ok "Postinstall abgeschlossen."
 msg "Admin-User: $ADMINUSER"
 msg "Hostname: $HOSTNAME_DARKNAS"
 msg "ttyd läuft auf: http://${SERVER_IP}:${TTYD_PORT}"
-echo
-echo "Drücke ENTER für Neustart..."
-read
+
+# Leere Zeile auf Konsole
+echo >/dev/tty
+
+# Neustart-Prompt
+echo "Drücke ENTER für Neustart..." >/dev/tty
+read < /dev/tty
 
 msg "Starte neu..."
 reboot
+
