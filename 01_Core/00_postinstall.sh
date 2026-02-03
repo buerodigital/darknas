@@ -331,9 +331,19 @@ msg_ok "SSL-Zertifikate erstellt."
 
 #############################################
 # 19) systemd-Service für ttyd erstellen
+# → Ports unter 1024 für non-root User freigeben
 # → nur Login für $ADMINUSER
 # → HTTPS aktiviert
 #############################################
+
+msg "Ports unter 1024 von non-root usern zulassen..."
+
+echo 'net.ipv4.ip_unprivileged_port_start=0' | sudo tee /etc/sysctl.d/99-unprivileged-ports.conf
+sysctl --system
+
+msg_ok "Ports freigegeben"
+
+
 msg "Erstelle systemd-Service..."
 
 cat > /etc/systemd/system/ttyd.service << EOF
