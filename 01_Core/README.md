@@ -4,23 +4,15 @@ su
 ````
 
 
-wget installieren, postinstall herunterladen, Berechtigungen setzen und starten
+Git installieren, Repo klonen, Berechtigungen setzen und starten
 ````
 apt install -y git
 git clone https://github.com/buerodigital/darknas.git
+chmod +x ~/darknas/01_Core/00_postinstall.sh
 ~/darknas/01_Core/00_postinstall.sh
 
 ````
 
-
-wget installieren, postinstall herunterladen, Berechtigungen setzen und starten
-````
-apt install -y wget
-wget --no-check-certificate https://darknas.ideenrocker.com/00_postinstall.sh -O /usr/local/sbin/00_postinstall.sh
-chmod 700 /usr/local/sbin/00_postinstall.sh
-chown root:root /usr/local/sbin/00_postinstall.sh
-/usr/local/sbin/00_postinstall.sh
-````
 
 Nach dem Neustart kann die Konsole via Browser geöffnet werden
 http://IP:7681/
