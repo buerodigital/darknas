@@ -46,6 +46,7 @@ SERVER_IP=$(hostname -I | awk '{print $1}')
 
 # Admin-Benutzer fuer DarkNAS
 ADMINUSER="darkroot"
+ADMINPASS="darkpass"
 
 # System-User fuer ttyd (ohne Login, ohne Home)
 TTYDUSER="ttyduser"
@@ -64,6 +65,13 @@ LOGFILE="$LOGDIR/${DATE}_00_postinstall.log"
 
 # sudoers-Datei
 SUDOERS_FILE="/etc/sudoers.d/darknas"
+
+# Podmanuser
+PODMANUSER="podmanuser"           # Name des dedizierten Podman-Users
+
+
+PODMAN_CONF="/etc/darknas/podman.conf"
+PODMAN_STACKDIR="/home/$PODMANUSER"
 
 # Farbdefinitionen
 NC="\033[0m"
@@ -131,7 +139,7 @@ fi
 # 05) Logdatei vorbereiten
 #############################################
 mkdir -p "$LOGDIR"
-exec >"$LOGFILE" 2>&1
+#exec >"$LOGFILE" 2>&1
 
 
 
@@ -180,7 +188,8 @@ fi
 #############################################
 # 10) Admin-User anlegen/aktualisieren
 #############################################
-if id "$ADMINUSER"; then
+
+if id "$ADMINUSER" &>/dev/null; then
     msg "Benutzer '$ADMINUSER' existiert bereits."
 else
     msg "Lege Benutzer '$ADMINUSER' an..."
@@ -188,23 +197,8 @@ else
     msg_ok "Benutzer '$ADMINUSER' angelegt."
 fi
 
-while true; do
-    # Prompt 1
-    echo -n "          Passwort für '$ADMINUSER' eingeben: " >/dev/tty
-    read -s PW1 < /dev/tty
-    echo >/dev/tty
-
-    # Prompt 2
-    echo -n "          Passwort erneut eingeben: " >/dev/tty
-    read -s PW2 < /dev/tty
-    echo >/dev/tty
-
-    [[ "$PW1" == "$PW2" ]] && break
-
-    msg_err "Passwörter stimmen nicht überein."
-done
-
-echo "${ADMINUSER}:${PW1}" | chpasswd
+# Passwort ohne Interaktion setzen
+echo "${ADMINUSER}:${ADMINPASS}" | chpasswd
 msg_ok "Passwort für '$ADMINUSER' gesetzt."
 
 
@@ -230,85 +224,17 @@ chmod 440 "$SUDOERS_FILE"
 msg_ok "sudoers-Datei erstellt."
 
 
-#############################################
-# 13) Marker-Konfigurationsdatei erstellen
-#############################################
-msg "Erstelle Marker-Datei..."
-
-{
-    echo "POSTINSTALL_DONE=1"
-    echo "ADMIN_USER=$ADMINUSER"
-} > "$CONFFILE"
-
-chmod 600 "$CONFFILE"
-msg_ok "Marker-Datei erstellt."
-
-
-#############################################
-# 14) Build-Abhängigkeiten für ttyd installieren
-#############################################
-msg "Installiere Build-Abhängigkeiten für ttyd..."
-
-apt-get install -y \
-    git build-essential cmake pkg-config \
-    libssl-dev libjson-c-dev zlib1g-dev \
-    libuv1-dev
-
-msg_ok "Build-Abhängigkeiten installiert."
-
-
-#############################################
-# 15) libwebsockets klonen und bauen (mit libuv)
-#############################################
-msg "Baue libwebsockets (mit libuv)..."
-
-cd /usr/local/src
-rm -rf libwebsockets
-git clone https://github.com/warmcat/libwebsockets.git
-
-cd libwebsockets
-mkdir build
-cd build
-
-cmake .. \
-    -DLWS_WITH_LIBUV=ON \
-    -DLWS_WITH_SERVER=ON \
-    -DLWS_WITH_CLIENT=ON \
-    -DLWS_WITH_HTTP2=ON \
-    -DLWS_WITHOUT_TESTAPPS=ON \
-
-make -j"$(nproc)"
-make install
-/sbin/ldconfig
-
-msg_ok "libwebsockets erfolgreich gebaut."
-
-
-#############################################
-# 16) ttyd klonen und bauen
-#############################################
-msg "Klone und baue ttyd..."
-
-cd /usr/local/src
-rm -rf ttyd
-git clone https://github.com/tsl0922/ttyd.git
-
-cd ttyd
-mkdir build
-cd build
-
-cmake ..
-make -j"$(nproc)"
-
-msg_ok "ttyd erfolgreich gebaut."
-
 
 #############################################
 # 17) ttyd installieren
 #############################################
 msg "Installiere ttyd..."
-make install
-/sbin/ldconfig
+
+apt install -y libssl-dev 
+
+apt install -y ~/darknas/01_Core/ttyd_1.7.7-4_amd64.deb
+apt install -y ~/darknas/01_Core/libwebsockets-dev_4.3.5-3_amd64.deb
+
 msg_ok "ttyd erfolgreich installiert."
 
 
@@ -352,13 +278,7 @@ Description=ttyd - Web Terminal (SSL)
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/ttyd \
-  --ssl \
-  --ssl-cert /etc/ttyd/ssl/ttyd.crt \
-  --ssl-key  /etc/ttyd/ssl/ttyd.key \
-  --writable \
-  -p ${TTYD_PORT} \
-  /bin/su - ${ADMINUSER}
+ExecStart=/usr/bin/ttyd --ssl --ssl-cert /etc/ttyd/ssl/ttyd.crt --ssl-key /etc/ttyd/ssl/ttyd.key --writable -p ${TTYD_PORT} /bin/su - ${ADMINUSER}
 Restart=always
 RestartSec=2
 User=root
@@ -377,7 +297,7 @@ msg_ok "ttyd systemd-Service-Datei erstellt."
 msg "Aktiviere und starte ttyd-Service..."
 
 systemctl daemon-reload
-systemctl enable ttyd --now
+systemctl enable ttyd
 
 msg_ok "ttyd systemd-Service aktiviert und gestartet."
 
@@ -386,7 +306,7 @@ msg_ok "ttyd systemd-Service aktiviert und gestartet."
 # 21) UFW installieren
 #############################################
 msg "Installiere UFW Firewall..."
-apt-get install -y ufw
+apt install -y ufw
 msg_ok "UFW installiert."
 
 
@@ -422,7 +342,7 @@ msg_ok "UFW Firewall aktiviert und konfiguriert."
 # 23) Fail2ban installieren
 #############################################
 msg "Installiere Fail2ban..."
-apt-get install -y fail2ban
+apt install -y fail2ban
 msg_ok "Fail2ban installiert."
 
 
@@ -454,11 +374,36 @@ systemctl restart fail2ban
 msg_ok "Fail2ban konfiguriert und gestartet."
 
 
+
+
+
 #############################################
-# 25) Abschlussmeldung + Neustart
+# 13) Marker-Konfigurationsdatei erstellen
+#############################################
+msg "Erstelle Marker-Datei..."
+
+{
+    echo "POSTINSTALL_DONE=1"
+    echo "ADMIN_USER=$ADMINUSER"
+} > "$CONFFILE"
+
+chmod 600 "$CONFFILE"
+msg_ok "Marker-Datei erstellt."
+
+
+
+
+
+
+
+
+#############################################
+# XX) Abschlussmeldung + Neustart
 #############################################
 msg_ok "Postinstall abgeschlossen."
 msg "Admin-User: $ADMINUSER"
+msg "Admin-Passwort: $ADMINPASS"
+msg "Podman-User: $PODMANUSER"
 msg "Hostname: $HOSTNAME_DARKNAS"
 msg "ttyd läuft auf: http://${SERVER_IP}:${TTYD_PORT}"
 
@@ -471,4 +416,3 @@ read < /dev/tty
 
 msg "Starte neu..."
 reboot
-
