@@ -3,6 +3,16 @@ Via ssh verbinden und einloggen
 su
 ````
 
+
+wget installieren, postinstall herunterladen, Berechtigungen setzen und starten
+````
+apt install -y git
+git clone https://github.com/buerodigital/darknas.git
+~/darknas/01_Core/00_postinstall.sh
+
+````
+
+
 wget installieren, postinstall herunterladen, Berechtigungen setzen und starten
 ````
 apt install -y wget
