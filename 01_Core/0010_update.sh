@@ -37,4 +37,9 @@ dark_update() {
     echo "System-Update abgeschlossen."
 }
 
-dark_update
+
+# --- Auto-Run nur, wenn das Skript direkt ausgeführt wird ---
+# Vergleich zwischen Quelle des Scripts und BASH_SOURCE
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    dark_update
+fi
