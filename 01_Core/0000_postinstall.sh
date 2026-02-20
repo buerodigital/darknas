@@ -48,7 +48,7 @@ cat ~/darknas/01_Core/darknaslogo.txt
 
 dark_checkroot() {
 if [[ $EUID -ne 0 ]]; then
-    msg_err "Dieses Skript muss als root ausgeführt werden."
+    echo "Dieses Skript muss als root ausgeführt werden."
     exit 1
 fi
 }
@@ -62,12 +62,12 @@ dark_checkroot
 
 dark_set_variables() {
 # Umgebungsvariablen setzen
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" 
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # Konfigurationsfile anlegen und sourcen
 mv ~/darknas/01_Core/darknas.conf /etc/darknas.conf
-sudo chown root:root /etc/darknas.conf
-sudo chmod 644 /etc/darknas.conf
+chown root:root /etc/darknas.conf
+chmod 644 /etc/darknas.conf
 source /etc/darknas.conf
 }
 
