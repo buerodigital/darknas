@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# 00_postinstall.sh – DarkNAS Grundsystem
+# 0000_postinstall.sh – DarkNAS Grundsystem
 #
 # ============================================================
 #                    I N H A L T S  V E R Z E I C H N I S
@@ -34,79 +34,70 @@
 
 clear
 
+
 #############################################
-# 01) Variablen definieren
+# 01) DarkNAS Logo
 #############################################
 
-# Hostname fuer DarkNAS
-HOSTNAME_DARKNAS="darkNAS"
+cat ~/darknas/01_Core/darknaslogo.txt
 
-# IP des darkNAS Systems
-SERVER_IP=$(hostname -I | awk '{print $1}')
 
-# Admin-Benutzer fuer DarkNAS
-ADMINUSER="darkroot"
-ADMINPASS="darkpass"
+#############################################
+# 02) Root-Prüfung
+#############################################
 
-# System-User fuer ttyd (ohne Login, ohne Home)
-TTYDUSER="ttyduser"
+dark_checkroot() {
+if [[ $EUID -ne 0 ]]; then
+    msg_err "Dieses Skript muss als root ausgeführt werden."
+    exit 1
+fi
+}
 
-# Port fuer ttyd
-TTYD_PORT="7681"
+dark_checkroot
 
-# DarkNAS Konfigurationspfade
-CONFDIR="/etc/darknas"
-CONFFILE="$CONFDIR/00_postinstall.conf"
 
-# Logging
-LOGDIR="/var/log/darknas"
-DATE=$(date +"%Y-%m-%d")
+#############################################
+# 03) Variablen definieren und Konfigurationsfile einrichten
+#############################################
+
+dark_set_variables() {
+# Umgebungsvariablen setzen
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > /dev/null 2>&1
+
+# Konfigurationsfile anlegen und sourcen
+mv ./darknas.conf /etc/darknas.conf
+sudo chown root:root /etc/darknas.conf
+sudo chmod 644 /etc/darknas.conf
+source /etc/darknas.conf
+}
+
+dark_set_variables > /dev/null 2>&1
+
+
+#############################################
+# 04) Logging
+#############################################
+
+dark_log() {
+# Logging vorbereiten
+mkdir -p "$LOGDIR"
 LOGFILE="$LOGDIR/${DATE}_00_postinstall.log"
 
-# sudoers-Datei
-SUDOERS_FILE="/etc/sudoers.d/darknas"
+exec 3>&1 4>&2
+exec >"$LOGFILE" 2>&1
+}
 
-# Podmanuser
-PODMANUSER="podmanuser"           # Name des dedizierten Podman-Users
-
-
-PODMAN_CONF="/etc/darknas/podman.conf"
-PODMAN_STACKDIR="/home/$PODMANUSER"
-
-# Farbdefinitionen
-NC="\033[0m"
-CYAN="\033[36m"
-GREEN="\033[32m"
-YELLOW="\033[33m"
-RED="\033[31m"
-
-msg()      { echo -e "${CYAN}[DarkNAS]${NC} $1" >/dev/tty; }
-msg_ok()   { echo -e "${GREEN}[DarkNAS]${NC} $1" >/dev/tty; }
-msg_warn() { echo -e "${YELLOW}[DarkNAS]${NC} $1" >/dev/tty; }
-msg_err()  { echo -e "${RED}[DarkNAS]${NC} $1" >/dev/tty; }
-
-
-#############################################
-# DarkNAS Logo
-#############################################
-cat >/dev/tty << "EOF"
-    ____             _      _   _    _    ____
-   |  _ \  __ _ _ __| | __ | \ | |  / \  / ___|
-   | | | |/ _´ | ´__| |/ / |  \| | / _ \ \___ \
-   | |_| | |_| | |  |   |  | |\  |/ ___ \ ___| |
-   |____/ \__._|_|  |_|\_\ |_| \_/_/   \_\____/
-Data belongs in the dark. Simple. Silent. Reliable.
-EOF
-
-echo
+dark_log
 msg_ok "Postinstall gestartet – Log: $LOGFILE"
 
+# Am Ende des Scriptes unbedingt "exec 1>&3 2>&4" ausführen
+
 
 #############################################
-# 02) Hostname setzen
+# 05) Hostname setzen
 #############################################
-msg "Setze Hostname auf '$HOSTNAME_DARKNAS'..."
 
+dark_set_hostname() {
 hostnamectl set-hostname "$HOSTNAME_DARKNAS"
 echo "$HOSTNAME_DARKNAS" > /etc/hostname
 
@@ -116,78 +107,75 @@ if grep -q "^127.0.1.1" /etc/hosts; then
 else
     echo "127.0.1.1   $HOSTNAME_DARKNAS" >> /etc/hosts
 fi
+}
 
+msg "Setze Hostname auf '$HOSTNAME_DARKNAS'..."
+dark_set_hostname
 msg_ok "Hostname gesetzt."
 
 
 #############################################
-# 03) PATH sicherstellen
+# 06) Systemupdate
 #############################################
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-
-#############################################
-# 04) Root-Prüfung
-#############################################
-if [[ $EUID -ne 0 ]]; then
-    msg_err "Dieses Skript muss als root ausgeführt werden."
-    exit 1
-fi
-
-
-#############################################
-# 05) Logdatei vorbereiten
-#############################################
-mkdir -p "$LOGDIR"
-#exec >"$LOGFILE" 2>&1
-
-
-
-#############################################
-# 06) Konfigurations-Verzeichnis vorbereiten
-#############################################
-mkdir -p "$CONFDIR"
-
-if [[ -f "$CONFFILE" ]]; then
-    msg_warn "Marker-Datei existiert – Skript wurde bereits ausgeführt."
-    exit 0
-fi
-
-
-#############################################
-# 07) Systemupdate
-#############################################
 msg "Systemupdate..."
-apt-get update -y
-apt-get upgrade -y
+source ./0010_update.sh
+dark_update
 msg_ok "Systemupdate abgeschlossen."
 
 
 #############################################
-# 08) Zeitsynchronisation sicherstellen (chrony)
+# 07) Zeitsynchronisation sicherstellen (chrony)
 #############################################
-msg "Installiere und aktiviere chrony..."
+
+dark_install_chrony() {
 apt-get install -y chrony
 systemctl enable chrony --now
 chronyc makestep
+}
+
+msg "Installiere und aktiviere chrony..."
+dark_install_chrony
 msg_ok "Zeitsynchronisation abgeschlossen."
 
 
 #############################################
-# 09) sudo installieren
+# 08) sudo installieren
 #############################################
+
+dark_install_sudo(){
 if ! command -v sudo; then
-    msg "Installiere sudo..."
     apt-get install -y sudo
-    msg_ok "sudo installiert."
-else
-    msg "sudo bereits installiert."
 fi
+}
+
+msg "Installiere sudo..."
+dark_install_sudo
+msg_ok "sudo installiert."
 
 
 #############################################
-# 10) Admin-User anlegen/aktualisieren
+# 09) Privilegierte Ports für nicht-root-User freigeben
+# → Ports unter 1024 für non-root User freigeben
 #############################################
+
+dark_ports() {
+echo 'net.ipv4.ip_unprivileged_port_start=0' | sudo tee /etc/sysctl.d/99-unprivileged-ports.conf
+sysctl --system
+}
+
+msg "Priviligierte Ports für non-root user zulassen..."
+dark_ports
+msg_ok "Ports freigegeben"
+
+
+#############################################
+# 10) Admin-User anlegen/aktualisieren,
+#     in die sudo Gruppe aufnehmen,
+#     sudoers-Datei erstellen
+#############################################
+
+dark_create_admin() {
 
 if id "$ADMINUSER" &>/dev/null; then
     msg "Benutzer '$ADMINUSER' existiert bereits."
@@ -197,24 +185,20 @@ else
     msg_ok "Benutzer '$ADMINUSER' angelegt."
 fi
 
+
 # Passwort ohne Interaktion setzen
 echo "${ADMINUSER}:${ADMINPASS}" | chpasswd
 msg_ok "Passwort für '$ADMINUSER' gesetzt."
 
 
-#############################################
-# 11) Admin-User in sudo-Gruppe aufnehmen
-#############################################
+# User in die sudo Gruppe aufnehmen 
 msg "Füge '$ADMINUSER' zur sudo-Gruppe hinzu..."
 usermod -aG sudo "$ADMINUSER"
 msg_ok "'$ADMINUSER' ist Mitglied der sudo-Gruppe."
 
 
-#############################################
-# 12) sudoers-Datei erstellen
-#############################################
+# sudoers-Datei erstellen
 msg "Erstelle sudoers-Datei..."
-
 {
     echo "# DarkNAS Admin-Rechte"
     echo "${ADMINUSER} ALL=(ALL) NOPASSWD: ALL"
@@ -223,26 +207,31 @@ msg "Erstelle sudoers-Datei..."
 chmod 440 "$SUDOERS_FILE"
 msg_ok "sudoers-Datei erstellt."
 
+}
+
+dark_create_admin
 
 
 #############################################
-# 17) ttyd installieren
+# 11) ttyd installieren
 #############################################
-msg "Installiere ttyd..."
 
+dark_install_ttyd() {
 apt install -y libssl-dev 
-
 apt install -y ~/darknas/01_Core/ttyd_1.7.7-4_amd64.deb
 apt install -y ~/darknas/01_Core/libwebsockets-dev_4.3.5-3_amd64.deb
+}
 
+msg "Installiere ttyd..."
+dark_install_ttyd
 msg_ok "ttyd erfolgreich installiert."
 
 
 #############################################
-# 18) SSL-Zertifikate für ttyd erstellen
+# 12) SSL-Zertifikate für ttyd erstellen
 #############################################
-msg "Erstelle SSL-Zertifikate für ttyd..."
 
+dark_ttyd_ssl() {
 mkdir -p /etc/ttyd/ssl
 
 openssl req -x509 -nodes -days 3650 \
@@ -252,26 +241,20 @@ openssl req -x509 -nodes -days 3650 \
   -subj "/CN=darkNAS"
 
 chmod 600 /etc/ttyd/ssl/ttyd.key
+}
+
+msg "Erstelle SSL-Zertifikate für ttyd..."
+dark_ttyd_ssl
 msg_ok "SSL-Zertifikate erstellt."
 
 
 #############################################
-# 19) systemd-Service für ttyd erstellen
-# → Ports unter 1024 für non-root User freigeben
-# → nur Login für $ADMINUSER
+# 13) systemd-Service für ttyd erstellen
+# → Login für $ADMINUSER
 # → HTTPS aktiviert
 #############################################
 
-msg "Ports unter 1024 von non-root usern zulassen..."
-
-echo 'net.ipv4.ip_unprivileged_port_start=0' | sudo tee /etc/sysctl.d/99-unprivileged-ports.conf
-sysctl --system
-
-msg_ok "Ports freigegeben"
-
-
-msg "Erstelle systemd-Service..."
-
+dark_ttyd_service() {
 cat > /etc/systemd/system/ttyd.service << EOF
 [Unit]
 Description=ttyd - Web Terminal (SSL)
@@ -288,32 +271,21 @@ Group=root
 WantedBy=multi-user.target
 EOF
 
-msg_ok "ttyd systemd-Service-Datei erstellt."
-
-
-#############################################
-# 20) ttyd Service aktivieren und starten
-#############################################
-msg "Aktiviere und starte ttyd-Service..."
-
 systemctl daemon-reload
 systemctl enable ttyd
+}
 
-msg_ok "ttyd systemd-Service aktiviert und gestartet."
+msg "Erstelle und starte systemd-Service..."
+dark_ttyd_service
+msg_ok "ttyd systemd-Service-Datei erstellt, Service gestartet."
 
 
 #############################################
-# 21) UFW installieren
+# 14) UFW installieren und konfigurieren
 #############################################
-msg "Installiere UFW Firewall..."
+
+darf_ufw() {
 apt install -y ufw
-msg_ok "UFW installiert."
-
-
-#############################################
-# 22) UFW konfigurieren
-#############################################
-msg "Ermittle internes LAN..."
 
 LAN_CIDR=$(ip -o -f inet addr show | awk '/scope global/ {print $4; exit}')
 
@@ -334,22 +306,20 @@ ufw allow from "$LAN_CIDR" to any port ${TTYD_PORT} proto tcp
 ufw allow from "$LAN_CIDR" to any port 445 proto tcp
 
 echo "y" | ufw enable
+}
 
-msg_ok "UFW Firewall aktiviert und konfiguriert."
+msg "Installiere UFW Firewall..."
+darf_ufw
+msg_ok "UFW installiert und konfiguriert."
+
 
 
 #############################################
-# 23) Fail2ban installieren
+# 23) Fail2ban installieren und konfigurieren
 #############################################
-msg "Installiere Fail2ban..."
+
+dark_fail2ban(){
 apt install -y fail2ban
-msg_ok "Fail2ban installiert."
-
-
-#############################################
-# 24) Fail2ban konfigurieren
-#############################################
-msg "Konfiguriere Fail2ban..."
 
 cat > /etc/fail2ban/jail.local << EOF
 [DEFAULT]
@@ -371,48 +341,31 @@ logpath = /var/log/samba/log.smbd
 EOF
 
 systemctl restart fail2ban
-msg_ok "Fail2ban konfiguriert und gestartet."
+}
 
-
-
-
-
-#############################################
-# 13) Marker-Konfigurationsdatei erstellen
-#############################################
-msg "Erstelle Marker-Datei..."
-
-{
-    echo "POSTINSTALL_DONE=1"
-    echo "ADMIN_USER=$ADMINUSER"
-} > "$CONFFILE"
-
-chmod 600 "$CONFFILE"
-msg_ok "Marker-Datei erstellt."
-
-
-
-
-
-
+msg "Installiere Fail2ban..."
+dark_fail2ban
+msg_ok "Fail2ban installiert und konfiguriert."
 
 
 #############################################
 # XX) Abschlussmeldung + Neustart
 #############################################
+
+# IP des darkNAS Systems
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
 msg_ok "Postinstall abgeschlossen."
 msg "Admin-User: $ADMINUSER"
-msg "Admin-Passwort: $ADMINPASS"
 msg "Podman-User: $PODMANUSER"
 msg "Hostname: $HOSTNAME_DARKNAS"
 msg "ttyd läuft auf: http://${SERVER_IP}:${TTYD_PORT}"
 
-# Leere Zeile auf Konsole
-echo >/dev/tty
 
-# Neustart-Prompt
-echo "Drücke ENTER für Neustart..." >/dev/tty
+exec 1>&3 2>&4
+echo
+echo "Drücke ENTER für Neustart..."
 read < /dev/tty
+echo "Starte neu..."
 
-msg "Starte neu..."
 reboot
