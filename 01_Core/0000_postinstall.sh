@@ -65,7 +65,7 @@ dark_set_variables() {
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" 
 
 # Konfigurationsfile anlegen und sourcen
-mv ./darknas.conf /etc/darknas.conf
+mv ~/darknas/01_Core/darknas.conf /etc/darknas.conf
 sudo chown root:root /etc/darknas.conf
 sudo chmod 644 /etc/darknas.conf
 source /etc/darknas.conf
