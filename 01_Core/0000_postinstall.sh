@@ -62,7 +62,7 @@ dark_checkroot
 
 dark_set_variables() {
 # Umgebungsvariablen setzen
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > /dev/null 2>&1
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" 
 
 # Konfigurationsfile anlegen und sourcen
 mv ./darknas.conf /etc/darknas.conf
