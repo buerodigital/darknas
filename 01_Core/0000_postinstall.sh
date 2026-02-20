@@ -307,6 +307,8 @@ ufw allow from "$LAN_CIDR" to any port ${TTYD_PORT} proto tcp
 ufw allow from "$LAN_CIDR" to any port 445 proto tcp
 
 echo "y" | ufw enable
+
+systemctl enable ufw
 }
 
 msg "Installiere UFW Firewall..."
