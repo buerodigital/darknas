@@ -9,8 +9,8 @@ Git installieren, Repo klonen, Berechtigungen setzen und starten
 cd ~
 apt install -y git
 git clone https://github.com/buerodigital/darknas.git
-chmod +x ~/darknas/01_Core/00_postinstall.sh
-~/darknas/01_Core/00_postinstall.sh
+chmod +x ~/darknas/01_Core/0000_postinstall.sh
+~/darknas/01_Core/0000_postinstall.sh
 
 ````
 
