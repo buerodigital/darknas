@@ -4,13 +4,20 @@ su
 ````
 
 
-Git installieren, Repo klonen, Berechtigungen setzen und starten
+Variante 1 - Git installieren, Repo klonen, Berechtigungen setzen und starten
 ````
 cd ~
 apt install -y git
 git clone https://github.com/buerodigital/darknas.git
 chmod +x ~/darknas/01_Core/0000_postinstall.sh
 ~/darknas/01_Core/0000_postinstall.sh
+
+````
+
+Variante 2 - Wget download postinstall
+````
+apt install -y wget
+wget --no-check-certificate https://darknas.ideenrocker.com/00_postinstall.sh -O /usr/local/sbin/00_postinstall.sh
 
 ````
 
